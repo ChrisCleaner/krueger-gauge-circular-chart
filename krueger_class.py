@@ -7,7 +7,7 @@ Created on Thu Dec 16 19:49:29 2021
 
 import math
 import cairo
-#from PIL import Image, ImageDraw
+from PIL import Image
 #import argparse
 
 class krueger_circular_gauge_chart():
