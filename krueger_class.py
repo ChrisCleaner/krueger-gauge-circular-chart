@@ -7,23 +7,22 @@ Created on Thu Dec 16 19:49:29 2021
 
 import math
 import cairo
-from PIL import Image, ImageDraw
-import argparse
+#from PIL import Image, ImageDraw
+#import argparse
 
 class krueger_circular_gauge_chart():
     
-    def __init__(self):
+    def __init__(self, data_dict, height = 2000, width = 2000, background_color = (0.3, 0.3, 0.3), max_width = 80, max_length = 1.5 * math.pi, spacing = 20):
         #set settings
-        self.height = 2000
-        self.width = 2000
+        self.height = height
+        self.width = width
         self.center = (self.width/2, self.height/2)
-        self.size = 300
-        self.dict = {"Pigs":(2,100), "Cows":(3,150), "Dogs":(5,49)}
+        self.dict = data_dict
         self.rings = len(self.dict)
-        self.background_color = (.3, .3, .3)
-        self.max_width = 80
-        self.spacing = 10
-        self.max_length = 1.5 * math.pi
+        self.background_color = background_color
+        self.max_width = max_width
+        self.spacing = spacing
+        self.max_length = max_length
         self.font_size = self.max_width / 2
         
         #get a color scheme
@@ -154,12 +153,12 @@ class krueger_circular_gauge_chart():
 
 
     
-    
-test = krueger_circular_gauge_chart()
-test.draw()
-test.add_labels()
-test.save_and_display_image()
-print(test)
+data = {"Pigs":(2,50), "Cows":(3,350), "Dogs":(5,125), "Chickens":(0.7, 20)}
+k_c_g_chart = krueger_circular_gauge_chart(data)
+k_c_g_chart.draw()
+k_c_g_chart.add_labels()
+k_c_g_chart.save_and_display_image()
+print(k_c_g_chart)
 
         
         
