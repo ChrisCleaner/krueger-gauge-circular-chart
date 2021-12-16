@@ -5,15 +5,10 @@ below there is a code example.
 
     
 data = {"Pigs":(2,50), "Cows":(3,350), "Dogs":(5,125), "Chickens":(0.7, 20)}
-
 k_c_g_chart = krueger_circular_gauge_chart(data)
-
 k_c_g_chart.draw()
-
 k_c_g_chart.add_labels()
-
 k_c_g_chart.save_and_display_image()
-
 print(k_c_g_chart)
 
         
