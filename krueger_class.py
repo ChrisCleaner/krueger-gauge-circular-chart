@@ -9,6 +9,7 @@ import math
 import cairo
 from PIL import Image
 from matplotlib.colors import cnames, to_rgb
+#from os import remove
 
 class krueger_circular_gauge_chart():
     
@@ -70,6 +71,7 @@ class krueger_circular_gauge_chart():
     
     def save_image_as_png(self, name = "krueger_gauge_chart.png"):
         self.image_surface.write_to_png(name)  # Output to PNG
+        
         
         
         
@@ -229,7 +231,32 @@ class krueger_circular_gauge_chart():
             return
         else:
             raise ValueError(f"Your Radius seems a bit big, the canvas width is only {self.width}")
-        
+            
+    
+    def insert_png_and_save_chart(self, path_to_png, chart_name = "krueger_circular_gauge_chart.png"):
+        """
+        Implement change in size later
+        """
+        #load images
+        self.save_image_as_png("temp_file.png")
+        background = Image.open("temp_file.png")
+        foreground = Image.open(path_to_png)
+        #resize inserted png
+        basewidth = int(self.radius)
+        wpercent = (basewidth/float(foreground.size[0]))
+        hsize = int((float(foreground.size[1])*float(wpercent)))
+        foreground = foreground.resize((basewidth,hsize), Image.ANTIALIAS)
+        #combine and save images
+        background.paste(foreground, (int(self.center[0] - (basewidth/2)), int(self.center[1] - (hsize/2))), foreground)
+        background.save(chart_name)
+        """
+        implement deletion of temporary file later
+        """
+        #delete temp 
+#        background.close()
+#        foreground.close()
+#        remove("temp_file.png")
+                
 
     
 data = {"Pigs":(2,50), "Cows":(3,350), "Dogs":(5,125), "Chickens":(0.7, 20)}
@@ -241,7 +268,8 @@ k_c_g_chart = krueger_circular_gauge_chart(data, radius = 300)
 #k_c_g_chart.set_radius(600)
 k_c_g_chart.draw()
 k_c_g_chart.add_labels()
-k_c_g_chart.save_and_display_image()
+k_c_g_chart.insert_png_and_save_chart("pngegg.png")
+#k_c_g_chart.save_and_display_image()
 print(k_c_g_chart)
 
         
