@@ -8,11 +8,11 @@ Created on Thu Dec 16 19:49:29 2021
 import math
 import cairo
 from PIL import Image
-#import argparse
+from matplotlib.colors import cnames, to_rgb
 
 class krueger_circular_gauge_chart():
     
-    def __init__(self, data_dict, height = 2000, width = 2000, background_color = (0.3, 0.3, 0.3), max_width = 80, max_length = 1.5 * math.pi, spacing = 20):
+    def __init__(self, data_dict, height = 2000, width = 2000, background_color = (0.3, 0.3, 0.3), max_width = 80, max_length = 1.5 * math.pi, spacing = 20, radius = 200):
         #set settings
         self.height = height
         self.width = width
@@ -24,6 +24,7 @@ class krueger_circular_gauge_chart():
         self.spacing = spacing
         self.max_length = max_length
         self.font_size = self.max_width / 2
+        self.radius = radius
         
         #get a color scheme
         self.list_of_colors = [(145, 185, 141), (229, 192, 121), (210, 191, 88), (140, 190, 178), (255, 183, 10), (189, 190, 220),
@@ -81,10 +82,10 @@ class krueger_circular_gauge_chart():
             
             
 
-    def calculate_bars(self, starting_pos = (1000, 1000), spacing = 20, radius = 200):
+    def calculate_bars(self, starting_pos = (1000, 1000), spacing = 20):
     
         #calculate radii
-        return_radiuses = [radius]
+        return_radiuses = [self.radius]
         x, y = starting_pos
         prev_bar_width = 0
         for num, bar_width in enumerate(self.data_width_array):
@@ -131,7 +132,7 @@ class krueger_circular_gauge_chart():
             self.data_len_array.append(tuple_val[0] / max(self.length_array))
         
         
-        self.radiuses, self.angles = self.calculate_bars(spacing = 20)
+        self.radiuses, self.angles = self.calculate_bars(spacing = self.spacing)
         
        
         for num, (radius, angle) in enumerate(zip(self.radiuses, self.angles)):
@@ -152,9 +153,92 @@ class krueger_circular_gauge_chart():
 
 
 
+    def set_colors(self, color_list):
+        """
+        Insert list of color names or rgb values as (r,g,b) with values between zero and one
+        """
+        #check for errors in size
+        if len(color_list) != self.rings:
+            raise ValueError(f"length of color list is {len(color_list)} for {self.rings} items")
+        #check if names are given instead of rgb values
+        if type(color_list[0]) == str:
+            #create color list
+            rgb_colors = {}
+            for name, hex in cnames.items():
+                rgb_colors[name] = to_rgb(hex)
+            #translate name to rgb value
+            rgb_translation_list = []
+            for color in color_list:
+                if color not in cnames:
+                    raise ValueError(f"color {color} could not be found in matplotlib.colors.cnames")
+                else:
+                    rgb_translation_list.append(rgb_colors[color])
+            self.list_of_colors = rgb_translation_list
+            return
+         
+        #if everything is correct
+        self.list_of_colors = color_list
+        return
+        
+    def set_background_color(self, color):
+        #check if color is done by name
+        if type(color) == str:
+            rgb_colors = {}
+            for name, hex in cnames.items():
+                rgb_colors[name] = to_rgb(hex)
+            #translate name to rgb value
+            
+            
+            if color not in cnames:
+                raise ValueError(f"color {color} could not be found in matplotlib.colors.cnames")
+            else:
+                self.background_color = rgb_colors[color]
+                #redraw background
+                r, g, b = self.background_color
+                self.cr.set_source_rgb(r,g,b)
+                self.cr.rectangle(0, 0, self.width, self.height)
+                self.cr.fill()
+                return
+            
+        self.background_color = color
+        #redraw background
+        r, g, b = self.background_color
+        self.cr.set_source_rgb(r,g,b)
+        self.cr.rectangle(0, 0, self.width, self.height)
+        self.cr.fill()
+        return
+        
+    def set_spacing(self, spacing):
+        if type(spacing) == int:
+            self.spacing = spacing
+            return
+        else:
+            raise ValueError("Entered Value is not an Integer")
+            
+    def set_max_length(self, max_length):
+        
+        if (max_length > 0) and (max_length < math.pi * 2):
+            self.max_length = max_length
+            return
+        else:
+            raise ValueError("Entered Value is not between zero and two pi")
+            
+    def set_radius(self, radius):
+        if radius < (self.width/2):
+            self.radius = radius
+            return
+        else:
+            raise ValueError(f"Your Radius seems a bit big, the canvas width is only {self.width}")
+        
+
     
 data = {"Pigs":(2,50), "Cows":(3,350), "Dogs":(5,125), "Chickens":(0.7, 20)}
-k_c_g_chart = krueger_circular_gauge_chart(data)
+k_c_g_chart = krueger_circular_gauge_chart(data, radius = 300)
+#k_c_g_chart.set_colors(["blue", "red", "yellow", "brown"])
+#k_c_g_chart.set_background_color("blue")
+#k_c_g_chart.set_spacing(100)
+#k_c_g_chart.set_max_length(3)
+#k_c_g_chart.set_radius(600)
 k_c_g_chart.draw()
 k_c_g_chart.add_labels()
 k_c_g_chart.save_and_display_image()
