@@ -13,7 +13,7 @@ from matplotlib.colors import cnames, to_rgb
 
 class krueger_circular_gauge_chart():
     
-    def __init__(self, data_dict, height = 2000, width = 2000, background_color = (0.3, 0.3, 0.3), max_width = 80, max_length = 1.5 * math.pi, spacing = 20, radius = 200):
+    def __init__(self, data_dict, height = 2000, width = 2000, background_color = (0.3, 0.3, 0.3), max_width = 80, max_length = 1.5 * math.pi, spacing = 20, radius = 200, max_value = None):
         #set settings
         self.height = height
         self.width = width
@@ -26,6 +26,7 @@ class krueger_circular_gauge_chart():
         self.max_length = max_length
         self.font_size = self.max_width / 2
         self.radius = radius
+        self.max_value = max_value #displays maximum value of the bar
         
         #get a color scheme
         self.list_of_colors = [(145, 185, 141), (229, 192, 121), (210, 191, 88), (140, 190, 178), (255, 183, 10), (189, 190, 220),
@@ -111,15 +112,55 @@ class krueger_circular_gauge_chart():
             
         return return_radiuses, return_angles
         
-    def add_labels(self):
+    def add_labels(self, add_width = False):
         
         #write labels
         self.cr.set_font_size(self.font_size)
         for num, text_pos in enumerate(self.radiuses):
-            self.cr.move_to(self.center[0] - (len(self.name_list[num]) * self.font_size), self.center[1] - text_pos + self.spacing)
+            if not add_width:
+                self.cr.move_to(self.center[0] - self.cr.text_extents(self.name_list[num])[2] - self.spacing, self.center[1] - text_pos + self.spacing - self.cr.text_extents(self.name_list[num])[3]/self.spacing)
+                r, g, b = self.list_of_colors[num]
+                self.cr.set_source_rgb(r, g, b)
+                self.cr.show_text(self.name_list[num])
+            else:
+                self.cr.move_to(self.center[0] - self.cr.text_extents(self.name_list[num] + " " + str(self.width_array[num]))[2] - self.spacing, self.center[1] - text_pos + self.spacing - self.cr.text_extents(self.name_list[num])[3]/self.spacing)
+                r, g, b = self.list_of_colors[num]
+                self.cr.set_source_rgb(r, g, b)
+                self.cr.show_text(self.name_list[num] + " " + str(self.width_array[num]))
+                
+    def add_ending_labels(self, width = 5, outside_spacing = 50):
+        
+       
+        for num, (radius, angle) in enumerate(zip(self.radiuses, self.angles)):
+            self.cr.save()
+            #calculate starting point for label
+            angle -= .5 * math.pi #to adjust for starting point
+            x, y = self.center
+            x_prime = x + radius * math.cos(angle) - width * math.cos(angle)
+            y_prime = y + radius * math.sin(angle) - width * math.cos(angle)
+            
+            #get length of bar to outside
+            length = self.radiuses[-1] - radius + outside_spacing
+            x_prime_prime = x_prime + length * math.cos(angle)
+            y_prime_prime = y_prime + length * math.sin(angle)
+            
+            #draw bar to outside
+            self.cr.move_to(x_prime, y_prime)
+            self.cr.line_to(x_prime_prime, y_prime_prime)
+            self.cr.set_line_width(width)
             r, g, b = self.list_of_colors[num]
             self.cr.set_source_rgb(r, g, b)
-            self.cr.show_text(self.name_list[num])
+            self.cr.stroke()
+            
+            #add text
+            self.cr.move_to(x_prime_prime, y_prime_prime)
+            self.cr.rotate(angle)
+            r, g, b = self.list_of_colors[num]
+            self.cr.set_source_rgb(r, g, b)
+            self.cr.show_text(str(self.length_array[num]))
+            self.cr.restore()
+            
+        
     
     def draw(self):
         
@@ -131,16 +172,22 @@ class krueger_circular_gauge_chart():
         for name, tuple_val in self.dict.items():
             self.data_display_dict[name] = (math.pi * 0.5 * tuple_val[0] / max(self.length_array), tuple_val[1] / max(self.width_array))
             self.data_width_array.append(tuple_val[1] / max(self.width_array))
-            self.data_len_array.append(tuple_val[0] / max(self.length_array))
+            if not self.max_value: #if max length value is provided
+                self.data_len_array.append(tuple_val[0] / max(self.length_array))
+            else:
+                self.data_len_array.append(tuple_val[0] / self.max_value)
         
         
         self.radiuses, self.angles = self.calculate_bars(spacing = self.spacing)
         
-       
+        lighter_background_color = (self.background_color[0] * 1.3, self.background_color[1] * 1.3, self.background_color[2] * 1.3)
         for num, (radius, angle) in enumerate(zip(self.radiuses, self.angles)):
+            #first draw underlying 100% mark with lighter color than background
+            self.draw_circle(angle = self.max_length, radius = radius, line_width = self.data_width_array[num] * self.max_width, rgb_colors = lighter_background_color)
+            #draw values in color on top
             self.draw_circle(angle = angle, radius = radius, line_width = self.data_width_array[num] * self.max_width, rgb_colors = self.list_of_colors[num])
             
-        
+            
         
     
     
@@ -232,6 +279,8 @@ class krueger_circular_gauge_chart():
         else:
             raise ValueError(f"Your Radius seems a bit big, the canvas width is only {self.width}")
             
+            
+    
     
     def insert_png_and_save_chart(self, path_to_png, chart_name = "krueger_circular_gauge_chart.png"):
         """
@@ -259,8 +308,8 @@ class krueger_circular_gauge_chart():
                 
 
     
-data = {"Pigs":(2,50), "Cows":(3,350), "Dogs":(5,125), "Chickens":(0.7, 20)}
-k_c_g_chart = krueger_circular_gauge_chart(data, radius = 300)
+data = {"Pig":(2,50), "Ground Hogs":(3,30), "Dogs":(5,125), "Chickens":(0.55, 130)}
+k_c_g_chart = krueger_circular_gauge_chart(data, radius = 300, max_value = 8)
 #k_c_g_chart.set_colors(["blue", "red", "yellow", "brown"])
 #k_c_g_chart.set_background_color("blue")
 #k_c_g_chart.set_spacing(100)
@@ -268,11 +317,66 @@ k_c_g_chart = krueger_circular_gauge_chart(data, radius = 300)
 #k_c_g_chart.set_radius(600)
 k_c_g_chart.draw()
 k_c_g_chart.add_labels()
-k_c_g_chart.insert_png_and_save_chart("pngegg.png")
-#k_c_g_chart.save_and_display_image()
+k_c_g_chart.add_ending_labels()
+#k_c_g_chart.insert_png_and_save_chart("pngegg.png")
+k_c_g_chart.save_and_display_image()
 print(k_c_g_chart)
 
         
+
+
+"""
+FUTURE FUNCTIONS
+
+#@staticmethod #to calculate out points of rectangle drawn
+    def calculate_edge_points(self, starting_point, width, angle):
+        points = [(starting_point[0], starting_point[1])]
+        
+        #point2
+        x = starting_point[0] + (width * math.cos(angle))
+        y = starting_point[1] + (width * math.sin(angle))
+        points.append((x,y))
+        
+        #point3
+        new_angle = math.pi - angle
+        x = points[-1][0] + (width * math.cos(new_angle))
+        y = points[-1][0] + (width * math.sin(new_angle))
+        points.append((x, y))
+        
+        #point4
+        new_angle = math.pi - angle
+        x = points[-1][0] + (width * math.cos(new_angle))
+        y = points[-1][0] + (width * math.sin(new_angle))
+        points.append((x, y))
+        
+        return points
+        
+            
+            
+            
+    def soft_edges(self):
+
+        #creates round edges at the end of each bar (for looks)
+
+        for num, (radius, angle) in enumerate(zip(self.radiuses, self.angles)):
+            point_of_soft_edge = (self.center[0] + math.cos(angle-math.pi*.5)*radius, self.center[0] + math.sin(angle-math.pi*.5)*radius ) #subtract half pi to adjust for starting at the top
+            x, y = point_of_soft_edge
+            #self.cr.rectangle(point_of_soft_edge[0], point_of_soft_edge[1], 30, 30)
+            #draw rectangle according to angle of the bar at the point (cannot rotate cr.rectangle function)
+            self.cr.set_source_rgb(1,1,1)
+            points = self.calculate_edge_points((x,y), self.max_width * self.data_width_array[num], angle)
+            print(points)
+            self.cr.move_to(points[0][0], points[0][1])
+            self.cr.line_to(points[1][0], points[1][1])
+            self.cr.move_to(points[2][0], points[2][1])
+            self.cr.line_to(points[3][0], points[3][1])
+            self.cr.fill()
+            
+            self.cr.rectangle(point_of_soft_edge[0], point_of_soft_edge[1], 30, 30)
+            
+
+
+"""
         
         
     
