@@ -15,7 +15,7 @@ here = os.path.abspath(os.path.dirname(__file__))
 with codecs.open(os.path.join(here, "README.md"), encoding="utf-8") as fh:
     long_description = "\n" + fh.read()
 
-VERSION = '1.0.9'
+VERSION = '1.1.0'
 DESCRIPTION = 'Generating Krüger-Gauge-Circular-Charts'
 LONG_DESCRIPTION = 'A package that allows to build classical Gauge-Circular-Charts with another dimension of data display, namely the width of the circular bar'
 
@@ -33,7 +33,7 @@ setup(
     install_requires=['python-math', 'pycairo', 'pillow', 'matplotlib'],
     keywords=['python', 'gauge chart', 'circular gauge chart', 'charts'],
     classifiers=[
-        "Development Status :: 1 - Planning",
+        "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "Programming Language :: Python :: 3",
         "Operating System :: Unix",

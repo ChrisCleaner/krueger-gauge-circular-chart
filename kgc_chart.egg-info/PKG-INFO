@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: kgc-chart
-Version: 1.0.9
+Version: 1.1.0
 Summary: Generating Krüger-Gauge-Circular-Charts
 Home-page: UNKNOWN
 Author: Christoph Krüger
@@ -8,7 +8,7 @@ Author-email: <christoph.kruger@yahoo.com>
 License: UNKNOWN
 Keywords: python,gauge chart,circular gauge chart,charts
 Platform: UNKNOWN
-Classifier: Development Status :: 1 - Planning
+Classifier: Development Status :: 4 - Beta
 Classifier: Intended Audience :: Developers
 Classifier: Programming Language :: Python :: 3
 Classifier: Operating System :: Unix
